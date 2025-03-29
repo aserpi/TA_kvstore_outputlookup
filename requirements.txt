@@ -1,0 +1,4 @@
+pre-commit~=4.2
+ruff~=0.11
+splunk-add-on-ucc-framework~=5.60
+splunk-packaging-toolkit~=1.2
