@@ -32,6 +32,30 @@
                     },
                     "required": true,
                     "type": "radio"
+                },
+                {
+                    "defaultValue": "",
+                    "field": "require_fields",
+                    "help": "Update the KV store only if the specified fields are included in the search results.",
+                    "label": "Require fields",
+                    "options": {
+                        "items": [
+                            {
+                                "label": "All",
+                                "value": "all"
+                            },
+                            {
+                                "label": "Accelerated",
+                                "value": "accelerated"
+                            },
+                            {
+                                "label": "None",
+                                "value": ""
+                            }
+                        ]
+                    },
+                    "required": false,
+                    "type": "singleSelect"
                 }
             ],
             "name": "kvstore_outputlookup",
