@@ -1,4 +1,43 @@
 {
+    "alerts": [
+        {
+            "description": "Output results to a KV store",
+            "entity": [
+                {
+                    "field": "kvstore",
+                    "help": "KV store to update.",
+                    "label": "KV store",
+                    "labelField": "label",
+                    "required": true,
+                    "search": "| rest /servicesNS/-/-/storage/collections/config | search disabled = 0 | sort 0 + title | eval label = title.&quot; (&quot;.'eai:appName'.&quot;)&quot;",
+                    "type": "singleSelectSplunkSearch",
+                    "valueField": "title"
+                },
+                {
+                    "defaultValue": "append",
+                    "field": "mode",
+                    "help": "Append search results (updating existing records if the '_key' field is specified)to the KV store or replace its entire contents.",
+                    "label": "Results",
+                    "options": {
+                        "items": [
+                            {
+                                "label": "Append",
+                                "value": "append"
+                            },
+                            {
+                                "label": "replace",
+                                "value": "Replace"
+                            }
+                        ]
+                    },
+                    "required": true,
+                    "type": "radio"
+                }
+            ],
+            "name": "kvstore_outputlookup",
+            "label": "Output to KV store"
+        }
+    ],
     "pages": {
         "configuration": {
             "tabs": [
