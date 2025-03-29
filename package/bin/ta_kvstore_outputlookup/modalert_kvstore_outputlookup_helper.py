@@ -1,4 +1,7 @@
 import import_declare_test  # noqa:F401 isort:skip
+
+import json
+
 import solnlib
 import splunklib.binding
 
@@ -65,6 +68,27 @@ def process_event(helper, *args, **kwargs):
             break
     if kvstore is None:
         raise ValueError(f"KV store '{title}' is not visible from the app")
+
+    require_fields = helper.get_param("require_fields")
+    required_fields = None
+    if require_fields == "all":  # Get all fields in the KV store
+        required_fields = {f[6:] for f in kvstore.content if f.startswith("field.")}
+    elif require_fields == "accelerated":  # Get all fields in a KV store index
+        kvstore_idx = [
+            v for k, v in kvstore.content.items() if k.startswith("accelerated_fields.")
+        ]
+        required_fields = {f for idx in kvstore_idx for f in json.loads(idx).keys()}
+    if required_fields is not None:
+        result_fields = set(next(helper.get_events()).keys())  # Get results fields
+        missing_fields = required_fields - result_fields
+        if missing_fields:
+            raise ValueError(
+                f"Required KV store fields {', '.join(missing_fields)} are missing "
+                f"from the search results"
+            )
+        helper.log_info(
+            "All required KV store fields are included in the search results."
+        )
 
     if helper.get_param("mode") == "replace":
         kvstore.data.delete()
