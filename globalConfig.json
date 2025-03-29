@@ -9,14 +9,14 @@
                     "label": "KV store",
                     "labelField": "label",
                     "required": true,
-                    "search": "| rest /servicesNS/-/-/storage/collections/config | search disabled = 0 | sort 0 + title | eval label = title.&quot; (&quot;.'eai:appName'.&quot;)&quot;",
+                    "search": "| rest splunk_server=local /servicesNS/-/-/storage/collections/config | search disabled=0|sort 0 + title | eval label=title.&quot; (&quot;.'eai:appName'.&quot;)&quot;",
                     "type": "singleSelectSplunkSearch",
                     "valueField": "title"
                 },
                 {
                     "defaultValue": "append",
                     "field": "mode",
-                    "help": "Append search results (updating existing records if the '_key' field is specified)to the KV store or replace its entire contents.",
+                    "help": "Append search results (updating existing records if the '_key' field is specified) to the KV store or replace its entire contents.",
                     "label": "Results",
                     "options": {
                         "items": [
@@ -25,8 +25,8 @@
                                 "value": "append"
                             },
                             {
-                                "label": "replace",
-                                "value": "Replace"
+                                "label": "Replace",
+                                "value": "replace"
                             }
                         ]
                     },
