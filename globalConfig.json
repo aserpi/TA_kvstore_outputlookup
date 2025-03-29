@@ -1,0 +1,24 @@
+{
+    "pages": {
+        "configuration": {
+            "tabs": [
+                {
+                    "type": "loggingTab"
+                }
+            ],
+            "title": "Configuration",
+            "description": "Set up your add-on"
+        }
+    },
+    "meta": {
+        "name": "TA_kvstore_outputlookup",
+        "restRoot": "TA_kvstore_outputlookup",
+        "version": "0.0.1",
+        "displayName": "Outputlookup for KV store",
+        "schemaVersion": "0.0.9",
+        "supportedThemes": [
+            "light",
+            "dark"
+        ]
+    }
+}
