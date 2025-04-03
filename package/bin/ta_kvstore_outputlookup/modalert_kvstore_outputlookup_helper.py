@@ -55,15 +55,16 @@ def process_event(helper, *args, **kwargs):
     )
     helper.log_debug(f"Setting 'batch_size' to '{batch_size}'.")
 
+    # Get KV store
     title = helper.get_param("kvstore")
     helper.log_debug(f"Setting 'kvstore' to '{title}'.")
-
     client = solnlib.splunk_rest_client.SplunkRestClient(helper.session_key, helper.app)
     try:
         kvstore = client.kvstore[title]
     except KeyError:
         raise ValueError(f"KV store '{title}' is not visible from the app")
 
+    # Check if all required fields are present
     require_fields = helper.get_param("require_fields")
     required_fields = None
     if require_fields == "all":  # Get all fields in the KV store
@@ -85,10 +86,11 @@ def process_event(helper, *args, **kwargs):
             "All required KV store fields are included in the search results."
         )
 
+    # Clear KV store if necessary
     if helper.get_param("mode") == "replace":
         kvstore.data.delete()
-        helper.log_info("Existing records have been deleted from the KV Store.")
-    _batch_save_cycle(helper.get_events(), kvstore.data, batch_size, helper)
+        helper.log_info("Existing records have been deleted from the KV tore.")
 
+    _batch_save_cycle(helper.get_events(), kvstore.data, batch_size, helper)
     helper.log_info("Alert action finished.")
     return 0
