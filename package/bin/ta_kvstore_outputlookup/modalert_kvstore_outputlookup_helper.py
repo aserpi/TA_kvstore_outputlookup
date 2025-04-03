@@ -58,15 +58,10 @@ def process_event(helper, *args, **kwargs):
     title = helper.get_param("kvstore")
     helper.log_debug(f"Setting 'kvstore' to '{title}'.")
 
-    # No way to get a KV store by exact match: kvstore.get does not return a
-    # KVStoreCollection and search is not exact match.
     client = solnlib.splunk_rest_client.SplunkRestClient(helper.session_key, helper.app)
-    kvstore = None
-    for k in client.kvstore.iter(search=title):
-        if k.name == title:
-            kvstore = k
-            break
-    if kvstore is None:
+    try:
+        kvstore = client.kvstore[title]
+    except KeyError:
         raise ValueError(f"KV store '{title}' is not visible from the app")
 
     require_fields = helper.get_param("require_fields")
