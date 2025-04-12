@@ -1,46 +1,54 @@
 import import_declare_test  # noqa:F401 isort:skip
 
+import itertools
 import json
 
 import solnlib
 import splunklib.binding
 
 
-def _batch_save(batch, kvstore_data, helper):
-    """Saves a batch of events into a KV store.
-
-    Returns None if the events were saved with a single batch_save.
-    If they are too large, the batch gets recursively halved and the new
-    batch size is returned."""
-    try:
-        kvstore_data.batch_save(*batch)
-    except splunklib.binding.HTTPError as e:
-        if e.status != 400 or "max_size_per_batch_save_mb" not in e.args[0]:
-            raise
-        if len(batch) == 1:
-            raise ValueError(
-                "A record is too large to be inserted into the KV store."
-                "Try increasing 'max_size_per_batch_save_mb' in limits.conf"
-            )
-        batch_size = len(batch) // 2
-        helper.log_warn(f"Batch too large, decreasing to {batch_size} events.")
-        return _batch_save_cycle(batch, kvstore_data, batch_size, helper)
-
-
-def _batch_save_cycle(events, kvstore_data, batch_size, helper):
+def _batch_save(events, kvstore_data, max_batch_size, helper):
     """Saves events into a KV store in batches.
 
-    If a batch is too large, it is shrunk until a suitable size is found, which
-    then becomes the new batch size."""
-    batch = []
-    for idx, result in enumerate(events):
-        batch.append(result)
-        if (idx + 1) % batch_size == 0:
-            batch_size = _batch_save(batch, kvstore_data, helper) or batch_size
-            batch = []
-    if batch:
-        batch_size = _batch_save(batch, kvstore_data, helper) or batch_size
-    return batch_size
+    Batch size halves on failure and doubles (up to the initial max) after
+    successful saves.
+    """
+    batch_size = max_batch_size
+    while True:
+        full_batch = list(itertools.islice(events, batch_size))
+        if not full_batch:
+            break
+
+        # Use offset to avoid repeated slicing
+        offset = 0
+        while offset < len(full_batch):
+            batch = full_batch[offset : offset + batch_size]
+            try:
+                kvstore_data.batch_save(*batch)
+                offset += batch_size
+
+                # Double the batch size after success, but not beyond max_batch_size
+                increased_batch_size = min(batch_size * 2, max_batch_size)
+                if increased_batch_size > batch_size:
+                    batch_size = increased_batch_size
+                    helper.log_info(
+                        f"Batch saved, increasing batch size to {batch_size} events."
+                    )
+
+            except splunklib.binding.HTTPError as e:
+                if e.status != 400 or "max_size_per_batch_save_mb" not in e.args[0]:
+                    raise
+
+                batch_size = len(batch)  # May be smaller in last loop
+                if batch_size == 1:
+                    raise ValueError(
+                        "A record is too large to be inserted into the KV store. "
+                        "Try increasing 'max_size_per_batch_save_mb' in limits.conf"
+                    )
+
+                # Reduce batch size by half on failure
+                batch_size = batch_size // 2
+                helper.log_warn(f"Batch too large, decreasing to {batch_size} events.")
 
 
 def process_event(helper, *args, **kwargs):
@@ -91,6 +99,6 @@ def process_event(helper, *args, **kwargs):
         kvstore.data.delete()
         helper.log_info("Existing records have been deleted from the KV tore.")
 
-    _batch_save_cycle(helper.get_events(), kvstore.data, batch_size, helper)
+    _batch_save(helper.get_events(), kvstore.data, batch_size, helper)
     helper.log_info("Alert action finished.")
     return 0
