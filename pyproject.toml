@@ -1,0 +1,5 @@
+[tool.isort]
+known_local_folder = ["kvstore_utils"]
+known_ucc_framework = ["import_declare_test"]
+sections = ["UCC_FRAMEWORK", "FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+profile = "black"
